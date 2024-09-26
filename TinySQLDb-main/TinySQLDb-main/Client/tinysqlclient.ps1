@@ -6,7 +6,7 @@ param (
 )
 
 $eomToken = "<EOM>";
-$ipEndPoint = [System.Net.IPEndPoint]::new([System.Net.IPAddress]::Parse("127.0.0.1"), 11000)
+$ipEndPoint = [System.Net.IPEndPoint]::new([System.Net.IPAddress]::Parse($IP), $Port)
 
 function Send-Message {
     param (
@@ -62,6 +62,22 @@ function Send-SQLCommand {
     $client.Close()
 }
 
-# This is an example, should not be called here
-Send-SQLCommand -command "CREATE TABLE ESTUDIANTE"
-Send-SQlCommand -command "SELECT * FROM ESTUDIANTE"
+
+function Execute-MyQuery
+{
+    param (
+        [string]$file
+    )
+
+    $content = Get-Content $file
+    # $lines = $content -split ";"
+    # $lines | %
+    # {
+    #     Write-Output $_
+    # }
+    Write-Host $content
+
+}
+
+# Send-SQLCommand -command "CREATE TABLE ESTUDIANTE"
+# Send-SQlCommand -command "SELECT * FROM ESTUDIANTE"
