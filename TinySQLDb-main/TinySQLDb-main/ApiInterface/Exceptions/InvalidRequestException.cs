@@ -1,12 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ApiInterface.Exceptions
 {
     internal class InvalidRequestException : Exception
     {
+        // Constructor sin parámetros
+        public InvalidRequestException() : base()
+        {
+        }
+
+        // Constructor que acepta un mensaje personalizado
+        public InvalidRequestException(string message) : base(message)
+        {
+        }
     }
 }

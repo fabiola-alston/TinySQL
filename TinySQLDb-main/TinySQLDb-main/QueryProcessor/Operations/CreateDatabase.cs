@@ -3,11 +3,11 @@ using StoreDataManager;
 
 namespace QueryProcessor.Operations
 {
-    internal class Insert
+    internal class CreateDatabase
     {
         internal OperationStatus Execute()
         {
-            return Store.GetInstance().Insert();
+            return Store.GetInstance().CreateDatabase();
         }
     }
 }

@@ -63,21 +63,15 @@ function Send-SQLCommand {
 }
 
 
-function Execute-MyQuery
-{
-    param (
-        [string]$file
-    )
 
-    $content = Get-Content $file
-    # $lines = $content -split ";"
-    # $lines | %
-    # {
-    #     Write-Output $_
-    # }
-    Write-Host $content
+function Execute-MyQuery {
+param (
+    [string]$file
+)
 
+# Leer todo el contenido del archivo de SQL
+$content = Get-Content $file -Raw
+
+# Enviar el contenido completo al servidor
+Send-SQLCommand -command $content
 }
-
-# Send-SQLCommand -command "CREATE TABLE ESTUDIANTE"
-# Send-SQlCommand -command "SELECT * FROM ESTUDIANTE"

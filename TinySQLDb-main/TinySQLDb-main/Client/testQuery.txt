@@ -1,10 +1,1 @@
 CREATE DATABASE Tienda;
-SET DATABASE Tienda;
-
-CREATE TABLES Pedidos
-(
-    IDPedido INTEGER;
-    Cliente VARCHAR(30);
-    HoraPedido DATETIME
-    
-);
