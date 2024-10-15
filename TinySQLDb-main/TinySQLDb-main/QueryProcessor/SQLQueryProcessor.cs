@@ -11,14 +11,14 @@ namespace QueryProcessor
         {
             if (string.IsNullOrWhiteSpace(sentence))
             {
-                throw new UnknownSQLSentenceException("La sentencia SQL no puede estar vacía.");
+                throw new UnknownSQLSentenceException("La sentencia SQL no puede estar vacia.");
             }
 
             //// CREATE DATABASE
-            //if (sentence.StartsWith("CREATE DATABASE", StringComparison.OrdinalIgnoreCase))
-            //{
-            //    return new CreateDatabase.Execute();
-            //}
+            if (sentence.StartsWith("CREATE DATABASE", StringComparison.OrdinalIgnoreCase))
+            {
+                return new CreateDatabase().Execute(sentence);
+            }
 
             // SET DATABASE
             if (sentence.StartsWith("SET DATABASE", StringComparison.OrdinalIgnoreCase))

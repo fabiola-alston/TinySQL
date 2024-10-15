@@ -62,16 +62,29 @@ function Send-SQLCommand {
     $client.Close()
 }
 
-
-
 function Execute-MyQuery {
-param (
-    [string]$file
-)
+    param (
+        [string]$file
+    )
 
-# Leer todo el contenido del archivo de SQL
-$content = Get-Content $file -Raw
+    # Leer el archivo línea por línea
+    $content = Get-Content $file
 
-# Enviar el contenido completo al servidor
-Send-SQLCommand -command $content
+    
+    # Mostrar el comando en la consola
+    Write-Host "Ejecutando script completo." -ForegroundColor Yellow
+
+    # Medir tiempo total de ejecución del script
+    $totalExecutionTime = Measure-Command {
+        # Procesar cada línea por separado
+        foreach ($line in $content) {
+            if (-not [string]::IsNullOrWhiteSpace($line)) {  # Ignorar líneas vacías o en blanco
+                # Enviar el comando SQL al servidor
+                Send-SQLCommand -command $line
+            }
+        
+        }
+    }
+
+    Write-Host -ForegroundColor Cyan "Tiempo total de ejecucion del script: $($totalExecutionTime.TotalSeconds) segundos."
 }
