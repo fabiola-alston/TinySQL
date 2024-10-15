@@ -54,44 +54,56 @@ namespace StoreDataManager
             }
             else
             {
-                Console.WriteLine("nigger");
+                Console.WriteLine("Error");
             }
 
             return OperationStatus.Success;
         }
 
 
-        public OperationStatus SetDatabase()
+        public OperationStatus SetDatabase(string sentence)
+        {
+            string pattern = @"^SET\s+DATABASE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;";
+            Match match = Regex.Match(sentence, pattern);
+            if (match.Success)
+            {
+                string databaseName = match.Groups[1].Value;
+                Console.WriteLine(databaseName);
+            }
+            else
+            {
+                Console.WriteLine("Error");
+            }
+
+            return OperationStatus.Success;
+        }
+
+        public OperationStatus CreateTable(string sentence)
         {
             return OperationStatus.Success;
         }
 
-        public OperationStatus CreateTable()
-        {
-            return OperationStatus.Success;
-        }
-
-        public OperationStatus CreateIndex()
+        public OperationStatus CreateIndex(string sentence)
         {
             return OperationStatus.Success;
         }
 
 
-        public OperationStatus Select()
+        public OperationStatus Select(string sentence)
         {
             return OperationStatus.Success;
         }
 
-        public OperationStatus Insert()
+        public OperationStatus Insert(string sentence)
         {
             return OperationStatus.Success;
         }
 
-        public OperationStatus Update()
+        public OperationStatus Update(string sentence)
         {
             return OperationStatus.Success;
         }
-        public OperationStatus Delete()
+        public OperationStatus Delete(string sentence)
         {
             return OperationStatus.Success;
         }

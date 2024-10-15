@@ -5,9 +5,9 @@ namespace QueryProcessor.Operations
 {
     internal class Insert
     {
-        internal OperationStatus Execute()
+        internal OperationStatus Execute(string sentence)
         {
-            return Store.GetInstance().Insert();
+            return Store.GetInstance().Insert(sentence);
         }
     }
 }

@@ -23,31 +23,31 @@ namespace QueryProcessor
             // SET DATABASE
             if (sentence.StartsWith("SET DATABASE", StringComparison.OrdinalIgnoreCase))
             {
-                return new SetDatabase().Execute();
+                return new SetDatabase().Execute(sentence);
             }
 
             // CREATE TABLE
             if (sentence.StartsWith("CREATE TABLE", StringComparison.OrdinalIgnoreCase))
             {
-                return new CreateTable().Execute();
+                return new CreateTable().Execute(sentence);
             }
 
             // CREATE INDEX
             if (sentence.StartsWith("CREATE INDEX", StringComparison.OrdinalIgnoreCase))
             {
-                return new CreateIndex().Execute();
+                return new CreateIndex().Execute(sentence);
             }
 
             // SELECT
             if (sentence.StartsWith("SELECT", StringComparison.OrdinalIgnoreCase))
             {
-                return new Select().Execute();
+                return new Select().Execute(sentence);
             }
 
             // INSERT INTO
             if (sentence.StartsWith("INSERT INTO", StringComparison.OrdinalIgnoreCase))
             {
-                return new Insert().Execute();
+                return new Insert().Execute(sentence);
             }
 
             // UPDATE
@@ -59,7 +59,7 @@ namespace QueryProcessor
             // DELETE FROM
             if (sentence.StartsWith("DELETE FROM", StringComparison.OrdinalIgnoreCase))
             {
-                return new Delete().Execute();
+                return new Delete().Execute(sentence);
             }
 
             // Si la sentencia no es reconocida

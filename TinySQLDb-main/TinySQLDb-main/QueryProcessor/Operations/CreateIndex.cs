@@ -5,9 +5,9 @@ namespace QueryProcessor.Operations
 {
 	internal class CreateIndex
 	{
-		internal OperationStatus Execute()
+		internal OperationStatus Execute(string sentence)
 		{
-			return Store.GetInstance().CreateIndex();
+			return Store.GetInstance().CreateIndex(sentence);
 		}
 	}
 }
