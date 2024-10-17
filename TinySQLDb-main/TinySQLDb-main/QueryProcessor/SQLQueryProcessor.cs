@@ -9,6 +9,8 @@ namespace QueryProcessor
     {
         public static OperationStatus Execute(string sentence)
         {
+            Console.WriteLine("Command received: " + sentence);
+
             if (string.IsNullOrWhiteSpace(sentence))
             {
                 throw new UnknownSQLSentenceException("La sentencia SQL no puede estar vacia.");

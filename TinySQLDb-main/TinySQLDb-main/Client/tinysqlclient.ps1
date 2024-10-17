@@ -67,24 +67,21 @@ function Execute-MyQuery {
         [string]$file
     )
 
-    # Leer el archivo línea por línea
-    $content = Get-Content $file
+    $content = Get-Content $file -Raw
+    $content = $content -replace '\s+', ' '
+    $sqlCommands = $content -split ';\s*'
 
-    
-    # Mostrar el comando en la consola
     Write-Host "Ejecutando script completo." -ForegroundColor Yellow
-
-    # Medir tiempo total de ejecución del script
+    
     $totalExecutionTime = Measure-Command {
-        # Procesar cada línea por separado
-        foreach ($line in $content) {
-            if (-not [string]::IsNullOrWhiteSpace($line)) {  # Ignorar líneas vacías o en blanco
-                # Enviar el comando SQL al servidor
-                Send-SQLCommand -command $line
+        foreach ($command in $sqlCommands) {
+            $command = $command.Trim()
+            if (-not [string]::IsNullOrWhiteSpace($command)) {
+                Send-SQLCommand -command $command
+                # Write-Host $command
             }
-        
         }
     }
 
-    Write-Host -ForegroundColor Cyan "Tiempo total de ejecucion del script: $($totalExecutionTime.TotalSeconds) segundos."
+    Write-Host -ForegroundColor Cyan "Tiempo total de ejecucion del script: $($totalExecutionTime.TotalSeconds) segundos."
 }

@@ -1,3 +1,7 @@
 CREATE DATABASE Tienda;
 CREATE DATABASE Pene;
-SET DATABASE pene;
+
+CREATE TABLE peneTabla (
+    id INTEGER,
+    name VARCHAR(10),
+    date DATETIME);

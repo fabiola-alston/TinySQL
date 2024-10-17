@@ -44,7 +44,7 @@ namespace StoreDataManager
 
         public OperationStatus CreateDatabase(string sentence)
         {
-            string pattern = @"^CREATE\s+DATABASE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;";
+            string pattern = @"^CREATE\s+DATABASE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*";
             Match match = Regex.Match(sentence, pattern);
 
             if (match.Success)
@@ -63,7 +63,7 @@ namespace StoreDataManager
 
         public OperationStatus SetDatabase(string sentence)
         {
-            string pattern = @"^SET\s+DATABASE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;";
+            string pattern = @"^SET\s+DATABASE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*";
             Match match = Regex.Match(sentence, pattern);
             if (match.Success)
             {
@@ -80,6 +80,24 @@ namespace StoreDataManager
 
         public OperationStatus CreateTable(string sentence)
         {
+            string pattern = @"^CREATE\s+TABLE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\s*([a-zA-Z_][a-zA-Z0-9_]*\s+(?:INTEGER|DOUBLE|VARCHAR\(\d+\)|DATETIME)\s*(?:,\s*[a-zA-Z_][a-zA-Z0-9_]*\s+(?:INTEGER|DOUBLE|VARCHAR\(\d+\)|DATETIME)\s*)*)\)\s*;?\s*$";
+
+            Match match = Regex.Match(sentence, pattern, RegexOptions.Singleline);
+
+            if (match.Success)
+            {
+                string tableName = match.Groups[1].Value;
+                Console.WriteLine(tableName);
+
+                string columnNames = match.Groups[2].Value;
+                Console.WriteLine(columnNames);
+
+            }
+            else
+            {
+                Console.WriteLine("Error");
+            }
+
             return OperationStatus.Success;
         }
 
