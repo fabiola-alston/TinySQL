@@ -1,4 +1,4 @@
-﻿using Entities;
+using Entities;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
@@ -10,12 +10,13 @@ namespace StoreDataManager
     {
         private static Store? instance = null;
         private static readonly object _lock = new object();
-               
+        private string? currentDatabase; // Variable global para almacenar la base de datos seteada
+
         public static Store GetInstance()
         {
-            lock(_lock)
+            lock (_lock)
             {
-                if (instance == null) 
+                if (instance == null)
                 {
                     instance = new Store();
                 }
@@ -26,58 +27,138 @@ namespace StoreDataManager
         private const string DatabaseBasePath = @"C:\TinySql\";
         private const string DataPath = $@"{DatabaseBasePath}\Data";
         private const string SystemCatalogPath = $@"{DataPath}\SystemCatalog";
-        private const string SystemDatabasesFile = $@"{SystemCatalogPath}\SystemDatabases.table";
-        private const string SystemTablesFile = $@"{SystemCatalogPath}\SystemTables.table";
-        private const string SystemColumnsFile = $@"{SystemCatalogPath}\SystemColumns.table";
-        private const string SystemIndexesFile = $@"{SystemCatalogPath}\SystemIndexes.table";
+        private const string SystemDatabasesFile = $@"{SystemCatalogPath}\SystemDatabases.bin";
+        private const string SystemTablesFile = $@"{SystemCatalogPath}\SystemTables.bin";
+        private const string SystemColumnsFile = $@"{SystemCatalogPath}\SystemColumns.bin";
+        private const string SystemIndexesFile = $@"{SystemCatalogPath}\SystemIndexes.bin";
 
         public Store()
         {
             this.InitializeSystemCatalog();
-            
         }
 
         private void InitializeSystemCatalog()
         {
             Directory.CreateDirectory(SystemCatalogPath);
+
+            // Si el archivo de bases de datos no existe, se crea
+            if (!File.Exists(SystemDatabasesFile))
+            {
+                using (var fs = File.Create(SystemDatabasesFile)) { }
+            }
         }
 
         public OperationStatus CreateDatabase(string sentence)
         {
-            string pattern = @"^CREATE\s+DATABASE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*";
+            string pattern = @"^CREATE\s+DATABASE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;";
             Match match = Regex.Match(sentence, pattern);
 
             if (match.Success)
             {
                 string databaseName = match.Groups[1].Value;
-                Console.WriteLine(databaseName);
+
+                // Verificar si la base de datos ya existe
+                if (DatabaseExists(databaseName))
+                {
+                    Console.WriteLine($"La base de datos '{databaseName}' ya existe.");
+                    return OperationStatus.Success; // No arrojar error si la base de datos ya existe
+                }
+
+                // Crear la base de datos en el archivo binario
+                int newId = GetNextDatabaseId();
+
+                // Escribir el nuevo ID y nombre de la base de datos en binario
+                using (BinaryWriter writer = new BinaryWriter(File.Open(SystemDatabasesFile, FileMode.Append)))
+                {
+                    writer.Write(newId); // Escribe el ID en binario
+                    writer.Write(databaseName); // Escribe el nombre de la base de datos como string en binario
+                    writer.Write((byte)'\n'); // Agrega un salto de línea (nueva línea) en binario
+                }
+
+                Console.WriteLine($"Base de datos '{databaseName}' creada con ID {newId}.");
             }
             else
             {
-                Console.WriteLine("Error");
+                Console.WriteLine("Error al analizar la sentencia.");
+                return OperationStatus.Error;
             }
 
             return OperationStatus.Success;
+        }
+
+        private bool DatabaseExists(string databaseName)
+        {
+            if (File.Exists(SystemDatabasesFile))
+            {
+                using (BinaryReader reader = new BinaryReader(File.Open(SystemDatabasesFile, FileMode.Open)))
+                {
+                    while (reader.BaseStream.Position != reader.BaseStream.Length)
+                    {
+                        reader.ReadInt32(); // Leer el ID (sin usarlo aquí)
+                        string dbName = reader.ReadString();
+                        reader.ReadByte(); // Leer el byte del salto de línea
+
+                        if (dbName.Equals(databaseName)) // Comparación literal sin ignorar mayúsculas/minúsculas
+                        {
+                            return true; // La base de datos ya existe
+                        }
+                    }
+                }
+            }
+            return false; // La base de datos no existe
+        }
+
+
+
+        private int GetNextDatabaseId()
+        {
+            int nextId = 1;
+
+            if (File.Exists(SystemDatabasesFile))
+            {
+                using (BinaryReader reader = new BinaryReader(File.Open(SystemDatabasesFile, FileMode.Open)))
+                {
+                    while (reader.BaseStream.Position != reader.BaseStream.Length)
+                    {
+                        int id = reader.ReadInt32();
+                        string dbName = reader.ReadString();
+                        reader.ReadByte(); // Leer el byte del salto de línea
+                        nextId = id + 1; // El ID será el último leído más 1
+                    }
+                }
+            }
+
+            return nextId;
         }
 
 
         public OperationStatus SetDatabase(string sentence)
         {
-            string pattern = @"^SET\s+DATABASE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*";
+            string pattern = @"^SET\s+DATABASE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;";
             Match match = Regex.Match(sentence, pattern);
             if (match.Success)
             {
                 string databaseName = match.Groups[1].Value;
-                Console.WriteLine(databaseName);
+
+                // Verificar si la base de datos existe
+                if (!DatabaseExists(databaseName))
+                {
+                    Console.WriteLine($"La base de datos '{databaseName}' no existe.");
+                    return OperationStatus.Error; // Error si la base de datos no existe
+                }
+
+                // Establecer la base de datos actual
+                currentDatabase = databaseName;
+                Console.WriteLine($"Base de datos '{currentDatabase}' seteada correctamente.");
+                return OperationStatus.Success;
             }
             else
             {
-                Console.WriteLine("Error");
+                Console.WriteLine("Error al analizar la sentencia.");
+                return OperationStatus.Error;
             }
-
-            return OperationStatus.Success;
         }
-
+        
         public OperationStatus CreateTable(string sentence)
         {
             string pattern = @"^CREATE\s+TABLE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\s*([a-zA-Z_][a-zA-Z0-9_]*\s+(?:INTEGER|DOUBLE|VARCHAR\(\d+\)|DATETIME)\s*(?:,\s*[a-zA-Z_][a-zA-Z0-9_]*\s+(?:INTEGER|DOUBLE|VARCHAR\(\d+\)|DATETIME)\s*)*)\)\s*;?\s*$";
