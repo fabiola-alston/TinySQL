@@ -1,7 +1,39 @@
-CREATE DATABASE Tienda;
+CREATE DATABASE Nigger;
 CREATE DATABASE Pene;
+
+SET DATABASE Pene;
 
 CREATE TABLE peneTabla (
     id INTEGER,
     name VARCHAR(10),
-    date DATETIME);
+    pinga DOUBLE,
+    date DATETIME
+);
+
+CREATE TABLE sutiTabla (
+    id INTEGER,
+    name VARCHAR(10),
+    fata DOUBLE,
+    date DATETIME
+);
+
+INSERT INTO peneTabla (1, "Carlos", 3.14, "2024-10-18 12:00:00");
+
+INSERT INTO peneTabla (2, "JuanSebastian", 4.56, "2024-10-18 12:00:00");
+
+DROP TABLE sutiTabla;
+
+SET DATABASE Nigger;
+
+CREATE TABLE niggerTabla(
+    id INTEGER,
+    negro VARCHAR(69),
+    tamano DOUBLE,
+    date DATETIME
+);
+
+INSERT INTO niggerTabla (1, "Sigma", 5.4, "2024-10-18 12:00:00");
+
+INSERT INTO niggerTabla (2, "lilNigg", 6.75, "2024-10-18 12:00:00");
+
+DROP TABLE niggerTabla;

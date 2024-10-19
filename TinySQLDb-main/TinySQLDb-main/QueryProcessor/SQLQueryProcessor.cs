@@ -16,7 +16,7 @@ namespace QueryProcessor
                 throw new UnknownSQLSentenceException("La sentencia SQL no puede estar vacia.");
             }
 
-            //// CREATE DATABASE
+            // CREATE DATABASE
             if (sentence.StartsWith("CREATE DATABASE", StringComparison.OrdinalIgnoreCase))
             {
                 return new CreateDatabase().Execute(sentence);
@@ -32,6 +32,12 @@ namespace QueryProcessor
             if (sentence.StartsWith("CREATE TABLE", StringComparison.OrdinalIgnoreCase))
             {
                 return new CreateTable().Execute(sentence);
+            }
+
+            // DROP TABLE
+            if (sentence.StartsWith("DROP TABLE", StringComparison.OrdinalIgnoreCase))
+            {
+                return new DropTable().Execute(sentence);
             }
 
             // CREATE INDEX
