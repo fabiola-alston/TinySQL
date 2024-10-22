@@ -635,8 +635,8 @@ namespace StoreDataManager
         
         public OperationStatus Delete(string sentence)
         {
-            // Expresión regular para analizar la sentencia DELETE
-            string pattern = @"^DELETE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+WHERE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\""?([a-zA-Z0-9_.]+)\""?\s*;?$";
+            // Expresión regular para analizar la sentencia DELETE, incluyendo soporte para DATETIME
+            string pattern = @"^DELETE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+WHERE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\""?([a-zA-Z0-9_.:\-\s]+)\""?\s*;?$";
         
             // Intentar hacer match con la expresión regular
             Match match = Regex.Match(sentence, pattern);
@@ -648,17 +648,142 @@ namespace StoreDataManager
                 string variable = match.Groups[2].Value;
                 string value = match.Groups[3].Value;
         
-                // Imprimir los valores extraídos en consola
                 Console.WriteLine($"Tabla: {tableName}");
                 Console.WriteLine($"Variable: {variable}");
                 Console.WriteLine($"Valor: {value}");
         
-                // Aquí iría la lógica para proceder con el DELETE
+                // Verificar si la tabla existe en la base de datos actual
+                List<ColumnMetadata> columns = ReadTableFromSystemCatalog(tableName);
+                if (columns == null)
+                {
+                    // Imprimir el error en rojo
+                    Console.WriteLine($"Error: La tabla '{tableName}' no existe en la base de datos {currentDatabase}.");
+                    return OperationStatus.Error;
+                }
+        
+                // Validar y convertir el valor a su tipo correspondiente si es un DATETIME
+                foreach (var column in columns)
+                {
+                    if (column.ColumnName == variable && column.ColumnType == "DATETIME")
+                    {
+                        if (!DateTime.TryParse(value, out DateTime parsedDate))
+                        {
+                            Console.WriteLine($"Error: El valor '{value}' no es un DATETIME válido.");
+                            return OperationStatus.Error;
+                        }
+        
+                        value = parsedDate.ToString("yyyy-MM-dd HH:mm:ss");  // Asegurar que el formato sea consistente
+                    }
+                }
+        
+                // Eliminar las filas que coincidan con la condición WHERE
+                return DeleteRowsFromSystemColumns(tableName, variable, value, columns);
+            }
+            else
+            {
+        
+                Console.WriteLine("Error: Sintaxis incorrecta para el comando DELETE.");
+                return OperationStatus.Error;
+            }
+        }
+        
+        
+        private OperationStatus DeleteRowsFromSystemColumns(string tableName, string variable, string value, List<ColumnMetadata> columns)
+        {
+            string tempFile = Path.GetTempFileName(); // Crear un archivo temporal para almacenar los datos restantes
+            bool foundMatchingRows = false;
+        
+            using (var fs = new FileStream(SystemColumnsFile, FileMode.Open))
+            {
+                using (var br = new BinaryReader(fs))
+                {
+                    using (var tempFs = new FileStream(tempFile, FileMode.Create))
+                    {
+                        using (var bw = new BinaryWriter(tempFs))
+                        {
+                            while (br.BaseStream.Position < br.BaseStream.Length)
+                            {
+                                try
+                                {
+                                    // Leer el nombre de la tabla
+                                    string tblName = br.ReadString();
+        
+                                    if (tblName != tableName)
+                                    {
+                                        // Si no es la tabla que estamos buscando, copiar la fila completa al archivo temporal
+                                        bw.Write(tblName);
+                                        for (int i = 0; i < columns.Count; i++)
+                                        {
+                                            string columnName = br.ReadString();
+                                            string columnValue = br.ReadString();
+                                            bw.Write(columnName);
+                                            bw.Write(columnValue);
+                                        }
+                                        bw.Write(br.ReadByte()); // Salto de línea
+                                    }
+                                    else
+                                    {
+                                        // Es la tabla que estamos buscando, verificar la variable y el valor
+                                        bool matchFound = false;
+        
+                                        List<string> currentRowValues = new List<string>();
+                                        for (int i = 0; i < columns.Count; i++)
+                                        {
+                                            string columnName = br.ReadString();
+                                            string columnValue = br.ReadString();
+        
+                                            currentRowValues.Add(columnValue);
+        
+                                            if (columnName == variable && columnValue == value)
+                                            {
+                                                matchFound = true;
+                                            }
+                                        }
+        
+                                        br.ReadByte(); // Leer el salto de línea
+        
+                                        if (matchFound)
+                                        {
+                                            foundMatchingRows = true;
+                                            Console.WriteLine($"Eliminando fila donde {variable} = {value} en la tabla '{tableName}'.");
+                                            // No escribir la fila en el archivo temporal (esto la "elimina")
+                                        }
+                                        else
+                                        {
+                                            // Si no se encuentra un match, copiar la fila completa al archivo temporal
+                                            bw.Write(tblName);
+                                            for (int i = 0; i < columns.Count; i++)
+                                            {
+                                                bw.Write(columns[i].ColumnName);
+                                                bw.Write(currentRowValues[i]);
+                                            }
+                                            bw.Write((byte)'\n'); // Salto de línea
+                                        }
+                                    }
+                                }
+                                catch (EndOfStreamException)
+                                {
+                                    Console.WriteLine("Error: Se intentó leer más allá del final del archivo SystemColumnsFile.");
+                                    break; // Salir del ciclo si llegamos al final inesperadamente
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        
+            // Reemplazar el archivo original con el archivo temporal
+            File.Delete(SystemColumnsFile);
+            File.Move(tempFile, SystemColumnsFile);
+        
+            if (foundMatchingRows)
+            {
+                Console.WriteLine($"Filas eliminadas correctamente de la tabla '{tableName}' donde {variable} = {value}.");
                 return OperationStatus.Success;
             }
             else
             {
-                Console.WriteLine("Error: Sintaxis incorrecta para el comando DELETE.");
+                Console.WriteLine($"No se encontraron filas que coincidan con la condición WHERE {variable} = {value} en la tabla '{tableName}'.");
                 return OperationStatus.Error;
             }
         }
