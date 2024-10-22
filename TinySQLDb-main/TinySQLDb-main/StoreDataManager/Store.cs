@@ -632,9 +632,35 @@ namespace StoreDataManager
 
             return OperationStatus.Success;
         }
+        
         public OperationStatus Delete(string sentence)
         {
-            return OperationStatus.Success;
+            // Expresión regular para analizar la sentencia DELETE
+            string pattern = @"^DELETE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+WHERE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\""?([a-zA-Z0-9_.]+)\""?\s*;?$";
+        
+            // Intentar hacer match con la expresión regular
+            Match match = Regex.Match(sentence, pattern);
+        
+            if (match.Success)
+            {
+                // Obtener el nombre de la tabla, la variable y el valor
+                string tableName = match.Groups[1].Value;
+                string variable = match.Groups[2].Value;
+                string value = match.Groups[3].Value;
+        
+                // Imprimir los valores extraídos en consola
+                Console.WriteLine($"Tabla: {tableName}");
+                Console.WriteLine($"Variable: {variable}");
+                Console.WriteLine($"Valor: {value}");
+        
+                // Aquí iría la lógica para proceder con el DELETE
+                return OperationStatus.Success;
+            }
+            else
+            {
+                Console.WriteLine("Error: Sintaxis incorrecta para el comando DELETE.");
+                return OperationStatus.Error;
+            }
         }
     }
 
