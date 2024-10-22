@@ -1,39 +1,67 @@
-CREATE DATABASE Nigger;
-CREATE DATABASE Pene;
+CREATE DATABASE Lamda;
+CREATE DATABASE Foo;
 
-SET DATABASE Pene;
+SET DATABASE Foo;
 
-CREATE TABLE peneTabla (
+CREATE TABLE Tienda (
     id INTEGER,
     name VARCHAR(10),
-    pinga DOUBLE,
+    precio DOUBLE,
     date DATETIME
 );
 
-CREATE TABLE sutiTabla (
+CREATE TABLE Garage (
     id INTEGER,
     name VARCHAR(10),
-    fata DOUBLE,
+    kilometraje DOUBLE,
     date DATETIME
 );
 
-INSERT INTO peneTabla (1, "Carlos", 3.14, "2024-10-18 12:00:00");
+INSERT INTO Tienda (1, "Carlos", 3.14, "2024-10-18 12:00:00");
 
-INSERT INTO peneTabla (2, "JuanSebastian", 4.56, "2024-10-18 12:00:00");
+INSERT INTO Tienda (2, "JuanSebastian", 4.56, "2024-10-18 12:00:00");
 
-DROP TABLE sutiTabla;
+INSERT INTO Tienda (3, "Luis", 2.37, "2024-10-18 12:00:00");
 
-SET DATABASE Nigger;
+INSERT INTO Tienda (4, "Fernanda", 7, "2024-10-18 12:00:00");
 
-CREATE TABLE niggerTabla(
+INSERT INTO Tienda (5, "Julian", 12.3, "2024-10-18 12:00:00");
+
+INSERT INTO Tienda (6, "Benito", 3.14, "2024-10-18 12:00:00");
+
+DELETE FROM Tienda WHERE name = "Felipe";
+
+DELETE FROM Tienda WHERE name = "Julian";
+
+UPDATE Tienda SET id = 22 WHERE precio = 3.14;
+
+DROP TABLE Garage;
+
+SET DATABASE Rauw;
+
+SET DATABASE Lamda;
+
+CREATE TABLE lil(
     id INTEGER,
-    negro VARCHAR(69),
-    tamano DOUBLE,
+    color VARCHAR(70),
+    range DOUBLE,
     date DATETIME
 );
 
-INSERT INTO niggerTabla (1, "Sigma", 5.4, "2024-10-18 12:00:00");
+INSERT INTO lil (1, "Verde", 5.4, "2024-10-18 12:00:00");
 
-INSERT INTO niggerTabla (2, "lilNigg", 6.75, "2024-10-18 12:00:00");
+INSERT INTO lil (2, "Rojo", 45.3, "2024");
 
-DROP TABLE niggerTabla;
+INSERT INTO lil (5, "Beige", 21.3, "2024-10-18 12:00:00");
+
+INSERT INTO lil (3, "Magenta", 9.90, "2024-10-18 12:00:00");
+
+INSERT INTO lil (4, "Cafe", 55.2, "2024-10-18 12:00:00");
+
+DELETE FROM lil WHERE id = 3;
+
+UPDATE lil SET range = 88.4 WHERE color = "Beige";
+
+UPDATE lil SET lapiz = "heinz" WHERE color = "Beige";
+
+DROP TABLE lil;

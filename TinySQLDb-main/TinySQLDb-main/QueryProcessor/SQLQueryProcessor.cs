@@ -9,7 +9,10 @@ namespace QueryProcessor
     {
         public static OperationStatus Execute(string sentence)
         {
+            Console.WriteLine();
+            Console.ForegroundColor = ConsoleColor.DarkGray;
             Console.WriteLine("Command received: " + sentence);
+            Console.ResetColor();
 
             if (string.IsNullOrWhiteSpace(sentence))
             {

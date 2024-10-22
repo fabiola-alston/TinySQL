@@ -1,6 +1,6 @@
-CREATE DATABASE Vagina;
+CREATE DATABASE Tables;
 
-SET DATABASE Vagina;
+SET DATABASE Tables;
 
 CREATE TABLE Tabla1 (
     id INTEGER,
@@ -9,4 +9,29 @@ CREATE TABLE Tabla1 (
     date DATETIME
 );
 
-UPDATE Tabla1 SET name = "Felipe" WHERE id = 1;
+INSERT INTO Tabla1 (1, "Carlos", 3.14, "2024-10-18 12:00:00");
+
+INSERT INTO Tabla1 (2, "Juan", 3.14, "2024-10-18 12:00:00");
+
+INSERT INTO Tabla1 (3, "Pedro", 3.14, "2024-10-18 12:00:00");
+
+UPDATE Tabla1 SET name = "Daniel" WHERE id = 1;
+
+DELETE FROM Tabla1 WHERE id = 2;
+
+DROP TABLE Tabla1;
+
+CREATE TABLE Tabla2 (
+    id INTEGER,
+    name VARCHAR(10),
+    pinga DOUBLE,
+    date DATETIME
+);
+
+INSERT INTO Tabla2 (1, "Carlos", 3.14, "2024-10-18 12:00:00");
+
+INSERT INTO Tabla2 (2, "Juan", 3.14, "2024-10-18 12:00:00");
+
+INSERT INTO Tabla2 (3, "Pedro", 3.14, "2024-10-18 12:00:00");
+
+DELETE FROM Tabla2;

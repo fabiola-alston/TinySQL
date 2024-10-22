@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Entities;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -11,6 +12,7 @@ namespace StoreDataManager
         private static Store? instance = null;
         private static readonly object _lock = new object();
         private string? currentDatabase; // Variable global para almacenar la base de datos seteada
+        private readonly ConsoleHelper consoleHelper; // Instancia de ConsoleHelper
 
         public static Store GetInstance()
         {
@@ -34,6 +36,7 @@ namespace StoreDataManager
 
         public Store()
         {
+            consoleHelper = new ConsoleHelper();  // Instanciar ConsoleHelper una vez
             this.InitializeSystemCatalog();
         }
 
@@ -58,6 +61,10 @@ namespace StoreDataManager
 
         public OperationStatus CreateDatabase(string sentence)
         {
+            // Iniciar el temporizador
+            var stopwatch = Stopwatch.StartNew();
+            consoleHelper.PrintStartTimer("Iniciando creación de la base de datos...");
+
             string pattern = @"^CREATE\s+DATABASE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*";
             Match match = Regex.Match(sentence, pattern);
 
@@ -65,10 +72,15 @@ namespace StoreDataManager
             {
                 string databaseName = match.Groups[1].Value;
 
+                // Imprimir la información capturada con PrintInfo
+                consoleHelper.PrintInfo($"Base de datos que se quiere crear: {databaseName}");
+
                 // Verificar si la base de datos ya existe
                 if (DatabaseExists(databaseName))
                 {
-                    Console.WriteLine($"La base de datos '{databaseName}' ya existe.");
+                    consoleHelper.PrintError($"La base de datos '{databaseName}' ya existe.");
+                    stopwatch.Stop();
+                    consoleHelper.PrintStopTimer($"Operación finalizada en {stopwatch.ElapsedMilliseconds} ms.");
                     return OperationStatus.Success; // No arrojar error si la base de datos ya existe
                 }
 
@@ -83,14 +95,18 @@ namespace StoreDataManager
                     writer.Write((byte)'\n'); // Agrega un salto de línea (nueva línea) en binario
                 }
 
-                Console.WriteLine($"Base de datos '{databaseName}' creada con ID {newId}.");
+                consoleHelper.PrintSuccess($"Base de datos '{databaseName}' creada con ID {newId}.");
             }
             else
             {
-                Console.WriteLine("Error al analizar la sentencia.");
+                consoleHelper.PrintError("Error al analizar la sentencia.");
+                stopwatch.Stop();
+                consoleHelper.PrintStopTimer($"Operación finalizada en {stopwatch.ElapsedMilliseconds} ms.");
                 return OperationStatus.Error;
             }
 
+            stopwatch.Stop();
+            consoleHelper.PrintStopTimer($"Operación finalizada en {stopwatch.ElapsedMilliseconds} ms.");
             return OperationStatus.Success;
         }
 
@@ -139,6 +155,10 @@ namespace StoreDataManager
 
         public OperationStatus SetDatabase(string sentence)
         {
+            // Iniciar el temporizador
+            var stopwatch = Stopwatch.StartNew();
+            consoleHelper.PrintStartTimer("Iniciando la operación de seteo de la base de datos...");
+
             string pattern = @"^SET\s+DATABASE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*";
             Match match = Regex.Match(sentence, pattern);
             if (match.Success)
@@ -148,24 +168,43 @@ namespace StoreDataManager
                 // Verificar si la base de datos existe
                 if (!DatabaseExists(databaseName))
                 {
-                    Console.WriteLine($"La base de datos '{databaseName}' no existe.");
+                    consoleHelper.PrintError($"La base de datos '{databaseName}' no existe.");
+
+                    // Detener el temporizador y mostrar el tiempo final
+                    stopwatch.Stop();
+                    consoleHelper.PrintStopTimer($"Operación finalizada en {stopwatch.ElapsedMilliseconds} ms.");
+
                     return OperationStatus.Error; // Error si la base de datos no existe
                 }
 
                 // Establecer la base de datos actual
                 currentDatabase = databaseName;
-                Console.WriteLine($"Base de datos '{currentDatabase}' seteada correctamente.");
+                consoleHelper.PrintSuccess($"Base de datos '{currentDatabase}' seteada correctamente.");
+
+                // Detener el temporizador y mostrar el tiempo final
+                stopwatch.Stop();
+                consoleHelper.PrintStopTimer($"Operación finalizada en {stopwatch.ElapsedMilliseconds} ms.");
+
                 return OperationStatus.Success;
             }
             else
             {
-                Console.WriteLine("Error al analizar la sentencia.");
+                consoleHelper.PrintError("Error al analizar la sentencia.");
+
+                // Detener el temporizador y mostrar el tiempo final
+                stopwatch.Stop();
+                consoleHelper.PrintStopTimer($"Operación finalizada en {stopwatch.ElapsedMilliseconds} ms.");
+
                 return OperationStatus.Error;
             }
         }
 
         public OperationStatus CreateTable(string sentence)
         {
+            // Iniciar el temporizador
+            var stopwatch = Stopwatch.StartNew();
+            consoleHelper.PrintStartTimer("Iniciando la creación de la tabla...");
+
             string pattern = @"^CREATE\s+TABLE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\s*([a-zA-Z_][a-zA-Z0-9_]*\s+(?:INTEGER|DOUBLE|VARCHAR\(\d+\)|DATETIME)\s*(?:,\s*[a-zA-Z_][a-zA-Z0-9_]*\s+(?:INTEGER|DOUBLE|VARCHAR\(\d+\)|DATETIME)\s*)*)\)\s*;?\s*$";
 
             Match match = Regex.Match(sentence, pattern, RegexOptions.Singleline);
@@ -175,7 +214,7 @@ namespace StoreDataManager
                 string tableName = match.Groups[1].Value; // Nombre de la tabla
                 string columns = match.Groups[2].Value;   // Definición de las columnas
 
-                Console.WriteLine($"Tabla: {tableName}");
+                consoleHelper.PrintInfo($"Tabla: {tableName}");
 
                 // Separar las columnas por coma
                 string[] columnDefinitions = columns.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
@@ -193,7 +232,7 @@ namespace StoreDataManager
                         string columnType = columnMatch.Groups[2].Value; // tipo de variable
                         int sizeInBytes = GetColumnSize(columnType);
 
-                        Console.WriteLine($"Columna: {columnName}, Tipo: {columnType}, Tamaño: {sizeInBytes} bytes");
+                        consoleHelper.PrintInfo($"Columna: {columnName}, Tipo: {columnType}, Tamaño: {sizeInBytes} bytes");
 
                         // Agregar la columna a la lista de metadatos
                         columnList.Add(new ColumnMetadata
@@ -208,10 +247,17 @@ namespace StoreDataManager
                 // Registrar la tabla en el catálogo del sistema
                 WriteTableToSystemCatalog(tableName, columnList);
 
+                // Detener el temporizador y mostrar el tiempo final
+                stopwatch.Stop();
+                consoleHelper.PrintStopTimer($"Creación de la tabla completada en {stopwatch.ElapsedMilliseconds} ms.");
             }
             else
             {
-                Console.WriteLine("Error al analizar la sentencia.");
+                consoleHelper.PrintError("Error al analizar la sentencia CREATE TABLE.");
+
+                // Detener el temporizador y mostrar el tiempo final
+                stopwatch.Stop();
+                consoleHelper.PrintStopTimer($"Operación finalizada en {stopwatch.ElapsedMilliseconds} ms.");
             }
 
             return OperationStatus.Success;
@@ -256,44 +302,70 @@ namespace StoreDataManager
                 }
             }
 
-            Console.WriteLine($"Tabla '{tableName}' registrada con {columns.Count} columnas en la base de datos {currentDatabase}.");
+            consoleHelper.PrintSuccess($"Tabla '{tableName}' registrada con {columns.Count} columnas en la base de datos {currentDatabase}.");
         }
 
         public OperationStatus DropTable(string sentence)
         {
+            // Iniciar el temporizador
+            var stopwatch = Stopwatch.StartNew();
+            consoleHelper.PrintStartTimer("Iniciando eliminación de la tabla...");
+
             string pattern = @"^DROP\s+TABLE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*";
             Match match = Regex.Match(sentence, pattern);
 
             if (match.Success)
             {
                 string tableName = match.Groups[1].Value;
-                Console.WriteLine($"Drop table: {tableName}");
+                consoleHelper.PrintInfo($"Drop table: {tableName}");
+
                 // Verificar si la tabla existe en SystemTablesFile
                 List<ColumnMetadata> tableInfo = ReadTableFromSystemCatalog(tableName);
                 if (tableInfo == null)
                 {
-                    Console.WriteLine($"Error: La tabla '{tableName}' no existe en la base de datos {currentDatabase}.");
+                    consoleHelper.PrintError($"Error: La tabla '{tableName}' no existe en la base de datos {currentDatabase}.");
+
+                    // Detener el temporizador y mostrar el tiempo final
+                    stopwatch.Stop();
+                    consoleHelper.PrintStopTimer($"Operación finalizada en {stopwatch.ElapsedMilliseconds} ms.");
+
                     return OperationStatus.Error;
                 }
 
                 // Verificar si hay registros de esa tabla en SystemColumnsFile
                 if (TableHasColumns(tableName))
                 {
-                    Console.WriteLine($"Error: La tabla '{tableName}' no se puede eliminar porque no está vacía.");
+                    consoleHelper.PrintError($"Error: La tabla '{tableName}' no se puede eliminar porque no está vacía.");
+
+                    // Detener el temporizador y mostrar el tiempo final
+                    stopwatch.Stop();
+                    consoleHelper.PrintStopTimer($"Operación finalizada en {stopwatch.ElapsedMilliseconds} ms.");
+
                     return OperationStatus.Error;
                 }
 
                 // Eliminar la tabla de SystemTablesFile
                 DeleteTableFromSystemCatalog(tableName);
-                Console.WriteLine($"Tabla '{tableName}' eliminada exitosamente de la base de datos {currentDatabase}.");
+                consoleHelper.PrintSuccess($"Tabla '{tableName}' eliminada exitosamente de la base de datos {currentDatabase}.");
+
+                // Detener el temporizador y mostrar el tiempo final
+                stopwatch.Stop();
+                consoleHelper.PrintStopTimer($"Eliminación de la tabla completada en {stopwatch.ElapsedMilliseconds} ms.");
+
                 return OperationStatus.Success;
             }
             else
             {
-                Console.WriteLine("Error: Sintaxis incorrecta para el comando DROP TABLE.");
+                consoleHelper.PrintError("Error: Sintaxis incorrecta para el comando DROP TABLE.");
+
+                // Detener el temporizador y mostrar el tiempo final
+                stopwatch.Stop();
+                consoleHelper.PrintStopTimer($"Operación finalizada en {stopwatch.ElapsedMilliseconds} ms.");
+
                 return OperationStatus.Error;
             }
         }
+
 
         // Método para verificar si una tabla tiene columnas en SystemColumnsFile
         private bool TableHasColumns(string tableName)
@@ -339,12 +411,12 @@ namespace StoreDataManager
                         }
                         catch (EndOfStreamException)
                         {
-                            Console.WriteLine("Error: Se intentó leer más allá del final del archivo SystemColumnsFile.");
+                            consoleHelper.PrintError("Error: Se intentó leer más allá del final del archivo SystemColumnsFile.");
                             break; // Sal del ciclo si llegamos al final inesperadamente
                         }
                         catch (IOException ex)
                         {
-                            Console.WriteLine($"Error de IO al leer SystemColumnsFile: {ex.Message}");
+                            consoleHelper.PrintError($"Error de IO al leer SystemColumnsFile: {ex.Message}");
                             break;
                         }
                     }
@@ -411,7 +483,7 @@ namespace StoreDataManager
                                     {
                                         br.ReadByte();
                                     }
-                                    Console.WriteLine($"Tabla '{tableName}' eliminada del catálogo del sistema.");
+                                    consoleHelper.PrintSuccess($"Tabla '{tableName}' eliminada del catálogo del sistema.");
                                 }
                             }
                         }
@@ -427,16 +499,22 @@ namespace StoreDataManager
 
         public OperationStatus CreateIndex(string sentence)
         {
-            return OperationStatus.Success;
+            consoleHelper.PrintError("No ha sido implementado el proceso de esta sentencia");
+            return OperationStatus.Error;
         }
 
         public OperationStatus Select(string sentence)
         {
-            return OperationStatus.Success;
+            consoleHelper.PrintError("No ha sido implementado el proceso de esta sentencia");
+            return OperationStatus.Error;
         }
 
         public OperationStatus Insert(string sentence)
         {
+            // Iniciar el temporizador
+            var stopwatch = Stopwatch.StartNew();
+            consoleHelper.PrintStartTimer("Iniciando inserción...");
+
             string pattern = @"^INSERT\s+INTO\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.+)\)\s*";
             Match match = Regex.Match(sentence, pattern);
 
@@ -445,14 +523,19 @@ namespace StoreDataManager
                 string tableName = match.Groups[1].Value; // Nombre de la tabla
                 string values = match.Groups[2].Value;    // Valores a insertar
 
-                Console.WriteLine($"Insertando en tabla: {tableName} los valores: {values}");
+                consoleHelper.PrintInfo($"Insertando en tabla: {tableName} los valores: {values}");
 
                 // Validar que la tabla exista y obtener la estructura de las columnas
                 List<ColumnMetadata> columns = ReadTableFromSystemCatalog(tableName);
 
                 if (columns == null)
                 {
-                    Console.WriteLine($"Error: La tabla '{tableName}' no existe.");
+                    consoleHelper.PrintError($"Error: La tabla '{tableName}' no existe.");
+
+                    // Detener el temporizador y mostrar el tiempo final
+                    stopwatch.Stop();
+                    consoleHelper.PrintStopTimer($"Inserción fallida en {stopwatch.ElapsedMilliseconds} ms.");
+
                     return OperationStatus.Error;
                 }
 
@@ -460,7 +543,12 @@ namespace StoreDataManager
                 string[] valueList = values.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                 if (valueList.Length != columns.Count)
                 {
-                    Console.WriteLine($"Error: El número de valores no coincide con el número de columnas.");
+                    consoleHelper.PrintError($"Error: El número de valores no coincide con el número de columnas.");
+
+                    // Detener el temporizador y mostrar el tiempo final
+                    stopwatch.Stop();
+                    consoleHelper.PrintStopTimer($"Inserción fallida en {stopwatch.ElapsedMilliseconds} ms.");
+
                     return OperationStatus.Error;
                 }
 
@@ -473,7 +561,12 @@ namespace StoreDataManager
                     // Validar el tipo y tamaño del valor
                     if (!ValidateValue(column, value))
                     {
-                        Console.WriteLine($"Error: El valor '{value}' excede el tamaño permitido o no coincide con el tipo.");
+                        consoleHelper.PrintError($"Error: El valor '{value}' excede el tamaño permitido o no coincide con el tipo.");
+
+                        // Detener el temporizador y mostrar el tiempo final
+                        stopwatch.Stop();
+                        consoleHelper.PrintStopTimer($"Inserción fallida en {stopwatch.ElapsedMilliseconds} ms.");
+
                         return OperationStatus.Error;
                     }
                 }
@@ -483,12 +576,22 @@ namespace StoreDataManager
             }
             else
             {
-                Console.WriteLine("Error: Sintaxis incorrecta para el comando INSERT.");
+                consoleHelper.PrintError("Error: Sintaxis incorrecta para el comando INSERT INTO.");
+
+                // Detener el temporizador y mostrar el tiempo final
+                stopwatch.Stop();
+                consoleHelper.PrintStopTimer($"Inserción fallida en {stopwatch.ElapsedMilliseconds} ms.");
+
                 return OperationStatus.Error;
             }
 
+            // Detener el temporizador y mostrar el tiempo final
+            stopwatch.Stop();
+            consoleHelper.PrintStopTimer($"Inserción completada en {stopwatch.ElapsedMilliseconds} ms.");
+
             return OperationStatus.Success;
         }
+
 
         private List<ColumnMetadata> ReadTableFromSystemCatalog(string tableName)
         {
@@ -535,7 +638,7 @@ namespace StoreDataManager
                         }
                         catch (EndOfStreamException)
                         {
-                            Console.WriteLine("Error: Llegaste al final del archivo antes de tiempo.");
+                            consoleHelper.PrintError("Error: Llegaste al final del archivo antes de tiempo.");
                             break; // Sal del ciclo si llegas al final del archivo inesperadamente.
                         }
                     }
@@ -543,7 +646,6 @@ namespace StoreDataManager
             }
             return null; // La tabla no se encontró
         }
-
 
         private bool ValidateValue(ColumnMetadata column, string value)
         {
@@ -594,105 +696,100 @@ namespace StoreDataManager
                 }
             }
 
-            Console.WriteLine($"Valores insertados en la tabla '{tableName}' en la base de datos {currentDatabase}.");
+            consoleHelper.PrintSuccess($"Valores insertados en la tabla '{tableName}' en la base de datos {currentDatabase}.");
         }
-
 
         public OperationStatus Update(string sentence)
         {
-            string pattern = @"^UPDATE\s+(\w+)\s+SET\s+(\w+)\s*=\s*(.+?)(\s+WHERE\s+(.+))?$";
+            // Iniciar el temporizador
+            var stopwatch = Stopwatch.StartNew();
+            consoleHelper.PrintStartTimer("Iniciando actualización...");
+
+            // Expresión regular para analizar la sentencia UPDATE
+            string pattern = @"^UPDATE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+SET\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\""?([a-zA-Z0-9_.:\-\s]+)\""?\s+WHERE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\""?([a-zA-Z0-9_.:\-\s]+)\""?\s*;?$";
             Match match = Regex.Match(sentence, pattern);
 
             if (match.Success)
             {
-                string tableName = match.Groups[1].Value;
+                // Extraer la información de la sentencia
+                string tableName = match.Groups[1].Value;  // Nombre de la tabla
+                string columnToUpdate = match.Groups[2].Value;  // Columna a actualizar
+                string newValue = match.Groups[3].Value;  // Nuevo valor
+                string whereColumn = match.Groups[4].Value;  // Columna de la condición WHERE
+                string whereValue = match.Groups[5].Value;  // Valor de la condición WHERE
 
-                // Extract the column name
-                string columnName = match.Groups[2].Value;
+                // Imprimir la información capturada
+                consoleHelper.PrintInfo($"Tabla: {tableName}");
+                consoleHelper.PrintInfo($"Columna a actualizar: {columnToUpdate}");
+                consoleHelper.PrintInfo($"Nuevo valor: {newValue}");
+                consoleHelper.PrintInfo($"Columna de condición WHERE: {whereColumn}");
+                consoleHelper.PrintInfo($"Valor de la condición WHERE: {whereValue}");
 
-                // Extract the new value
-                string newValue = match.Groups[3].Value;
-
-                // Extract the where condition, if it exists
-                string whereCondition = match.Groups[5].Success ? match.Groups[5].Value : null;
-
-                Console.WriteLine($"Table: {tableName}");
-                Console.WriteLine($"Column: {columnName}");
-                Console.WriteLine($"New Value: {newValue}");
-
-                if (!string.IsNullOrEmpty(whereCondition))
-                {
-                    Console.WriteLine($"Where Condition: {whereCondition}");
-                }
-            }
-            else
-            {
-                Console.WriteLine("Error");
-            }
-
-            return OperationStatus.Success;
-        }
-        
-        public OperationStatus Delete(string sentence)
-        {
-            // Expresión regular para analizar la sentencia DELETE, incluyendo soporte para DATETIME
-            string pattern = @"^DELETE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+WHERE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\""?([a-zA-Z0-9_.:\-\s]+)\""?\s*;?$";
-        
-            // Intentar hacer match con la expresión regular
-            Match match = Regex.Match(sentence, pattern);
-        
-            if (match.Success)
-            {
-                // Obtener el nombre de la tabla, la variable y el valor
-                string tableName = match.Groups[1].Value;
-                string variable = match.Groups[2].Value;
-                string value = match.Groups[3].Value;
-        
-                Console.WriteLine($"Tabla: {tableName}");
-                Console.WriteLine($"Variable: {variable}");
-                Console.WriteLine($"Valor: {value}");
-        
                 // Verificar si la tabla existe en la base de datos actual
                 List<ColumnMetadata> columns = ReadTableFromSystemCatalog(tableName);
                 if (columns == null)
                 {
-                    // Imprimir el error en rojo
-                    Console.WriteLine($"Error: La tabla '{tableName}' no existe en la base de datos {currentDatabase}.");
+                    consoleHelper.PrintError($"Error: La tabla '{tableName}' no existe en la base de datos {currentDatabase}.");
+
+                    // Detener el temporizador
+                    stopwatch.Stop();
+                    consoleHelper.PrintStopTimer($"Actualización fallida en {stopwatch.ElapsedMilliseconds} ms.");
+
                     return OperationStatus.Error;
                 }
-        
-                // Validar y convertir el valor a su tipo correspondiente si es un DATETIME
-                foreach (var column in columns)
+
+                // Verificar que las columnas SET y WHERE existan en la tabla
+                bool columnToUpdateExists = columns.Any(c => c.ColumnName == columnToUpdate);
+                bool whereColumnExists = columns.Any(c => c.ColumnName == whereColumn);
+
+                if (!columnToUpdateExists)
                 {
-                    if (column.ColumnName == variable && column.ColumnType == "DATETIME")
-                    {
-                        if (!DateTime.TryParse(value, out DateTime parsedDate))
-                        {
-                            Console.WriteLine($"Error: El valor '{value}' no es un DATETIME válido.");
-                            return OperationStatus.Error;
-                        }
-        
-                        value = parsedDate.ToString("yyyy-MM-dd HH:mm:ss");  // Asegurar que el formato sea consistente
-                    }
+                    consoleHelper.PrintError($"Error: La columna '{columnToUpdate}' no existe en la tabla '{tableName}'.");
+
+                    // Detener el temporizador
+                    stopwatch.Stop();
+                    consoleHelper.PrintStopTimer($"Actualización fallida en {stopwatch.ElapsedMilliseconds} ms.");
+
+                    return OperationStatus.Error;
                 }
-        
-                // Eliminar las filas que coincidan con la condición WHERE
-                return DeleteRowsFromSystemColumns(tableName, variable, value, columns);
+
+                if (!whereColumnExists)
+                {
+                    consoleHelper.PrintError($"Error: La columna '{whereColumn}' no existe en la tabla '{tableName}'.");
+
+                    // Detener el temporizador
+                    stopwatch.Stop();
+                    consoleHelper.PrintStopTimer($"Actualización fallida en {stopwatch.ElapsedMilliseconds} ms.");
+
+                    return OperationStatus.Error;
+                }
+
+                // Actualizar los valores en el archivo SystemColumnsFile
+                var result = UpdateRowsInSystemColumns(tableName, columnToUpdate, newValue, whereColumn, whereValue, columns);
+
+                // Detener el temporizador y mostrar el tiempo final
+                stopwatch.Stop();
+                consoleHelper.PrintStopTimer($"Actualización completada en {stopwatch.ElapsedMilliseconds} ms.");
+
+                return result;
             }
             else
             {
-        
-                Console.WriteLine("Error: Sintaxis incorrecta para el comando DELETE.");
+                consoleHelper.PrintError("Error: Sintaxis incorrecta para el comando UPDATE.");
+
+                // Detener el temporizador
+                stopwatch.Stop();
+                consoleHelper.PrintStopTimer($"Actualización fallida en {stopwatch.ElapsedMilliseconds} ms.");
+
                 return OperationStatus.Error;
             }
         }
-        
-        
-        private OperationStatus DeleteRowsFromSystemColumns(string tableName, string variable, string value, List<ColumnMetadata> columns)
+
+        private OperationStatus UpdateRowsInSystemColumns(string tableName, string columnToUpdate, string newValue, string whereColumn, string whereValue, List<ColumnMetadata> columns)
         {
-            string tempFile = Path.GetTempFileName(); // Crear un archivo temporal para almacenar los datos restantes
+            string tempFile = Path.GetTempFileName();  // Crear un archivo temporal
             bool foundMatchingRows = false;
-        
+
             using (var fs = new FileStream(SystemColumnsFile, FileMode.Open))
             {
                 using (var br = new BinaryReader(fs))
@@ -703,87 +800,254 @@ namespace StoreDataManager
                         {
                             while (br.BaseStream.Position < br.BaseStream.Length)
                             {
-                                try
+                                string tblName = br.ReadString();
+
+                                if (tblName == tableName)
                                 {
-                                    // Leer el nombre de la tabla
-                                    string tblName = br.ReadString();
-        
-                                    if (tblName != tableName)
+                                    // Leer la fila completa de la tabla
+                                    bool matchFound = false;
+                                    List<string> currentRowValues = new List<string>();
+
+                                    // Leer los valores de las columnas
+                                    for (int i = 0; i < columns.Count; i++)
                                     {
-                                        // Si no es la tabla que estamos buscando, copiar la fila completa al archivo temporal
+                                        string columnName = br.ReadString();
+                                        string columnValue = br.ReadString();
+                                        currentRowValues.Add(columnValue);
+
+                                        // Verificar si la columna WHERE coincide
+                                        if (columnName == whereColumn && columnValue == whereValue)
+                                        {
+                                            matchFound = true;
+                                            foundMatchingRows = true;
+                                        }
+                                    }
+
+                                    br.ReadByte();  // Leer el salto de línea
+
+                                    // Si coincide la condición WHERE, actualizar el valor
+                                    if (matchFound)
+                                    {
+                                        consoleHelper.PrintInfo($"Actualizando fila donde '{whereColumn}' = '{whereValue}' en la tabla '{tableName}'.");
+
                                         bw.Write(tblName);
+
+                                        // Escribir las columnas actualizadas
                                         for (int i = 0; i < columns.Count; i++)
                                         {
-                                            string columnName = br.ReadString();
-                                            string columnValue = br.ReadString();
+                                            string columnName = columns[i].ColumnName;
                                             bw.Write(columnName);
-                                            bw.Write(columnValue);
+
+                                            // Actualizar solo la columna correspondiente
+                                            if (columnName == columnToUpdate)
+                                            {
+                                                bw.Write(newValue);  // Escribir el nuevo valor
+                                            }
+                                            else
+                                            {
+                                                bw.Write(currentRowValues[i]);  // Escribir el valor existente
+                                            }
                                         }
-                                        bw.Write(br.ReadByte()); // Salto de línea
+
+                                        bw.Write((byte)'\n');  // Agregar salto de línea
                                     }
                                     else
                                     {
-                                        // Es la tabla que estamos buscando, verificar la variable y el valor
-                                        bool matchFound = false;
-        
-                                        List<string> currentRowValues = new List<string>();
+                                        // Si no coincide la condición, copiar la fila tal cual al archivo temporal
+                                        bw.Write(tblName);
+
                                         for (int i = 0; i < columns.Count; i++)
                                         {
-                                            string columnName = br.ReadString();
-                                            string columnValue = br.ReadString();
-        
-                                            currentRowValues.Add(columnValue);
-        
-                                            if (columnName == variable && columnValue == value)
-                                            {
-                                                matchFound = true;
-                                            }
+                                            bw.Write(columns[i].ColumnName);
+                                            bw.Write(currentRowValues[i]);
                                         }
-        
-                                        br.ReadByte(); // Leer el salto de línea
-        
-                                        if (matchFound)
-                                        {
-                                            foundMatchingRows = true;
-                                            Console.WriteLine($"Eliminando fila donde {variable} = {value} en la tabla '{tableName}'.");
-                                            // No escribir la fila en el archivo temporal (esto la "elimina")
-                                        }
-                                        else
-                                        {
-                                            // Si no se encuentra un match, copiar la fila completa al archivo temporal
-                                            bw.Write(tblName);
-                                            for (int i = 0; i < columns.Count; i++)
-                                            {
-                                                bw.Write(columns[i].ColumnName);
-                                                bw.Write(currentRowValues[i]);
-                                            }
-                                            bw.Write((byte)'\n'); // Salto de línea
-                                        }
+
+                                        bw.Write((byte)'\n');  // Agregar salto de línea
                                     }
                                 }
-                                catch (EndOfStreamException)
+                                else
                                 {
-                                    Console.WriteLine("Error: Se intentó leer más allá del final del archivo SystemColumnsFile.");
-                                    break; // Salir del ciclo si llegamos al final inesperadamente
+                                    // Copiar las otras tablas sin cambios
+                                    bw.Write(tblName);
+
+                                    for (int i = 0; i < columns.Count; i++)
+                                    {
+                                        bw.Write(br.ReadString());  // Copiar el nombre de la columna
+                                        bw.Write(br.ReadString());  // Copiar el valor de la columna
+                                    }
+
+                                    bw.Write(br.ReadByte());  // Copiar el salto de línea
                                 }
                             }
                         }
                     }
                 }
             }
-        
+
             // Reemplazar el archivo original con el archivo temporal
             File.Delete(SystemColumnsFile);
             File.Move(tempFile, SystemColumnsFile);
-        
+
             if (foundMatchingRows)
             {
-                Console.WriteLine($"Filas eliminadas correctamente de la tabla '{tableName}' donde {variable} = {value}.");
+                consoleHelper.PrintSuccess($"Filas actualizadas correctamente en la tabla '{tableName}' donde '{whereColumn}' = '{whereValue}'.");
                 return OperationStatus.Success;
             }
             else
             {
-                Console.WriteLine($"No se encontraron filas que coincidan con la condición WHERE {variable} = {value} en la tabla '{tableName}'.");
+                consoleHelper.PrintError($"No se encontraron filas que coincidan con la condición WHERE '{whereColumn}' = '{whereValue}' en la tabla '{tableName}'.");
+                return OperationStatus.Error;
+            }
+        }
+
+        public OperationStatus Delete(string sentence)
+        {
+            // Iniciar el temporizador
+            var stopwatch = Stopwatch.StartNew();
+            consoleHelper.PrintStartTimer("Iniciando eliminación...");
+
+            // Expresión regular para analizar la sentencia DELETE, con y sin WHERE
+            string patternWithWhere = @"^DELETE\s+FROM\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+WHERE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\""?([a-zA-Z0-9_.:\-\s]+)\""?\s*;?$";
+            string patternWithoutWhere = @"^DELETE\s+FROM\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;?$";
+
+            Match matchWithWhere = Regex.Match(sentence, patternWithWhere);
+            Match matchWithoutWhere = Regex.Match(sentence, patternWithoutWhere);
+
+            string tableName, variable = null, value = null;
+
+            if (matchWithWhere.Success)
+            {
+                // DELETE con WHERE
+                tableName = matchWithWhere.Groups[1].Value;
+                variable = matchWithWhere.Groups[2].Value;
+                value = matchWithWhere.Groups[3].Value;
+
+                consoleHelper.PrintInfo($"Tabla: {tableName}");
+                consoleHelper.PrintInfo($"Variable: {variable}");
+                consoleHelper.PrintInfo($"Valor: {value}");
+            }
+            else if (matchWithoutWhere.Success)
+            {
+                // DELETE sin WHERE
+                tableName = matchWithoutWhere.Groups[1].Value;
+                consoleHelper.PrintInfo($"Tabla: {tableName}");
+            }
+            else
+            {
+                consoleHelper.PrintError("Error: Sintaxis incorrecta para el comando DELETE.");
+                return OperationStatus.Error;
+            }
+
+            // Verificar si la tabla existe en la base de datos actual
+            List<ColumnMetadata> columns = ReadTableFromSystemCatalog(tableName);
+            if (columns == null)
+            {
+                consoleHelper.PrintError($"Error: La tabla '{tableName}' no existe en la base de datos {currentDatabase}.");
+                return OperationStatus.Error;
+            }
+
+            // Eliminar las filas que coincidan con la condición WHERE, o todas si no hay WHERE
+            var result = DeleteRowsFromSystemColumns(tableName, variable, value, columns);
+
+            // Detener el temporizador y mostrar el tiempo final
+            stopwatch.Stop();
+            consoleHelper.PrintStopTimer($"Eliminación completada en {stopwatch.ElapsedMilliseconds} ms.");
+
+            return result;
+        }
+
+        private OperationStatus DeleteRowsFromSystemColumns(string tableName, string? variable, string? value, List<ColumnMetadata> columns)
+        {
+            string tempFile = Path.GetTempFileName(); // Crear un archivo temporal para almacenar los datos restantes
+            bool foundMatchingRows = false;
+
+            // Lista para almacenar todas las filas leídas antes de hacer cambios
+            List<(string tblName, List<string> rowValues)> allRows = new List<(string, List<string>)>();
+
+            using (var fs = new FileStream(SystemColumnsFile, FileMode.Open))
+            {
+                using (var br = new BinaryReader(fs))
+                {
+                    while (br.BaseStream.Position < br.BaseStream.Length)
+                    {
+                        try
+                        {
+                            // Leer el nombre de la tabla
+                            string tblName = br.ReadString();
+                            List<string> currentRowValues = new List<string>();
+
+                            for (int i = 0; i < columns.Count; i++)
+                            {
+                                string columnName = br.ReadString();
+                                string columnValue = br.ReadString();
+                                currentRowValues.Add(columnValue);
+                            }
+
+                            br.ReadByte(); // Leer el salto de línea
+
+                            // Guardar todas las filas para procesar después
+                            allRows.Add((tblName, currentRowValues));
+                        }
+                        catch (EndOfStreamException)
+                        {
+                            consoleHelper.PrintError("Error: Se intentó leer más allá del final del archivo SystemColumnsFile.");
+                            break;
+                        }
+                    }
+                }
+            }
+
+            using (var tempFs = new FileStream(tempFile, FileMode.Create))
+            {
+                using (var bw = new BinaryWriter(tempFs))
+                {
+                    foreach (var (tblName, currentRowValues) in allRows)
+                    {
+                        if (tblName != tableName)
+                        {
+                            // Si no es la tabla que estamos buscando, copiar la fila completa al archivo temporal
+                            bw.Write(tblName);
+                            for (int i = 0; i < columns.Count; i++)
+                            {
+                                bw.Write(columns[i].ColumnName);
+                                bw.Write(currentRowValues[i]);
+                            }
+                            bw.Write((byte)'\n'); // Salto de línea
+                        }
+                        else if (variable == null || currentRowValues[columns.FindIndex(c => c.ColumnName == variable)] == value)
+                        {
+                            foundMatchingRows = true;
+                            consoleHelper.PrintInfo($"Eliminando fila en la tabla '{tableName}'.");
+
+                            // No escribir la fila en el archivo temporal (esto la "elimina")
+                        }
+                        else
+                        {
+                            // Si no se encuentra un match, copiar la fila completa al archivo temporal
+                            bw.Write(tblName);
+                            for (int i = 0; i < columns.Count; i++)
+                            {
+                                bw.Write(columns[i].ColumnName);
+                                bw.Write(currentRowValues[i]);
+                            }
+                            bw.Write((byte)'\n'); // Salto de línea
+                        }
+                    }
+                }
+            }
+
+            // Reemplazar el archivo original con el archivo temporal
+            File.Delete(SystemColumnsFile);
+            File.Move(tempFile, SystemColumnsFile);
+
+            if (foundMatchingRows || variable == null)
+            {
+                consoleHelper.PrintSuccess($"Filas eliminadas correctamente de la tabla '{tableName}'.");
+                return OperationStatus.Success;
+            }
+            else
+            {
+                consoleHelper.PrintError($"No se encontraron filas que coincidan con la condición WHERE {variable} = {value} en la tabla '{tableName}'.");
                 return OperationStatus.Error;
             }
         }
@@ -791,8 +1055,8 @@ namespace StoreDataManager
 
     public class ColumnMetadata
     {
-        public string ColumnName { get; set; }
-        public string ColumnType { get; set; }
+        public string ColumnName { get; set; } = string.Empty; // Inicializar con valor no nulo
+        public string ColumnType { get; set; } = string.Empty; // Inicializar con valor no nulo
         public int SizeInBytes { get; set; }
     }
 }

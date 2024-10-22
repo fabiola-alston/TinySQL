@@ -85,3 +85,6 @@ function Execute-MyQuery {
 
     Write-Host -ForegroundColor Cyan "Tiempo total de ejecucion del script: $($totalExecutionTime.TotalSeconds) segundos."
 }
+
+#. .\tinysqlclient.ps1 -IP 127.0.0.1 -Port 11000
+# Execute-MyQuery -file testQuery.txt
