@@ -1,0 +1,12 @@
+CREATE DATABASE Vagina;
+
+SET DATABASE Vagina;
+
+CREATE TABLE Tabla1 (
+    id INTEGER,
+    name VARCHAR(10),
+    pinga DOUBLE,
+    date DATETIME
+);
+
+UPDATE Tabla1 SET name = "Felipe" WHERE id = 1;

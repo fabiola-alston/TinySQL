@@ -59,10 +59,10 @@ namespace QueryProcessor
             }
 
             // UPDATE
-            //if (sentence.StartsWith("UPDATE", StringComparison.OrdinalIgnoreCase))
-            //{
-            //    return new Update().Execute();
-            //}
+            if (sentence.StartsWith("UPDATE", StringComparison.OrdinalIgnoreCase))
+            {
+                return new Update().Execute(sentence);
+            }
 
             // DELETE FROM
             if (sentence.StartsWith("DELETE FROM", StringComparison.OrdinalIgnoreCase))

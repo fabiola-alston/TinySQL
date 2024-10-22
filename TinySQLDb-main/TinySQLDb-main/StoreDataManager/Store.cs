@@ -356,8 +356,6 @@ namespace StoreDataManager
         }
 
 
-
-
         // Método para eliminar la tabla de SystemTablesFile
         private void DeleteTableFromSystemCatalog(string tableName)
         {
@@ -425,7 +423,6 @@ namespace StoreDataManager
             File.Delete(SystemTablesFile);
             File.Move(tempFile, SystemTablesFile);
         }
-
 
 
         public OperationStatus CreateIndex(string sentence)
@@ -603,6 +600,36 @@ namespace StoreDataManager
 
         public OperationStatus Update(string sentence)
         {
+            string pattern = @"^UPDATE\s+(\w+)\s+SET\s+(\w+)\s*=\s*(.+?)(\s+WHERE\s+(.+))?$";
+            Match match = Regex.Match(sentence, pattern);
+
+            if (match.Success)
+            {
+                string tableName = match.Groups[1].Value;
+
+                // Extract the column name
+                string columnName = match.Groups[2].Value;
+
+                // Extract the new value
+                string newValue = match.Groups[3].Value;
+
+                // Extract the where condition, if it exists
+                string whereCondition = match.Groups[5].Success ? match.Groups[5].Value : null;
+
+                Console.WriteLine($"Table: {tableName}");
+                Console.WriteLine($"Column: {columnName}");
+                Console.WriteLine($"New Value: {newValue}");
+
+                if (!string.IsNullOrEmpty(whereCondition))
+                {
+                    Console.WriteLine($"Where Condition: {whereCondition}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Error");
+            }
+
             return OperationStatus.Success;
         }
         public OperationStatus Delete(string sentence)
