@@ -536,6 +536,72 @@ namespace StoreDataManager
             }
         }
 
+
+        // algoritmo quicksort, no hubo tiempo de implementarlo :(
+        public class QuickSortAlgorithm
+        {
+            public static void QuickSort(int[] array, int low, int high)
+            {
+                if (low < high)
+                {
+                    int partitionIndex = Partition(array, low, high);
+
+                    QuickSort(array, low, partitionIndex - 1); 
+                    QuickSort(array, partitionIndex + 1, high);
+                }
+            }
+
+            // Método de partición
+            private static int Partition(int[] array, int low, int high)
+            {
+                int pivot = array[high];
+                int i = (low - 1); 
+
+                for (int j = low; j < high; j++)
+                {
+                   
+                    if (array[j] <= pivot)
+                    {
+                        i++;
+        
+                        Swap(array, i, j);
+                    }
+                }
+
+                Swap(array, i + 1, high);
+
+                return i + 1; // Índice de partición
+            }
+
+            private static void Swap(int[] array, int a, int b)
+            {
+                int temp = array[a];
+                array[a] = array[b];
+                array[b] = temp;
+            }
+
+            public static void PrintArray(int[] array)
+            {
+                foreach (int t in array)
+                {
+                    Console.Write(t + " ");
+                }
+                Console.WriteLine();
+            }
+
+            public static void Main(string[] args)
+            {
+                int[] data = { 8, 7, 6, 1, 0, 9, 2 };
+                Console.WriteLine("Array original:");
+                PrintArray(data);
+
+                QuickSort(data, 0, data.Length - 1);
+
+                Console.WriteLine("Array ordenado:");
+                PrintArray(data);
+            }
+        }
+
         public OperationStatus Insert(string sentence)
         {
             // Iniciar el temporizador
