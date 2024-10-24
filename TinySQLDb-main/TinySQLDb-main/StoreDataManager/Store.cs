@@ -505,8 +505,41 @@ namespace StoreDataManager
 
         public OperationStatus Select(string sentence)
         {
-            consoleHelper.PrintError("No ha sido implementado el proceso de esta sentencia");
-            return OperationStatus.Error;
+            var selectPattern = @"SELECT\s+(?<columns>[\*\w,\s]+)\s+FROM\s+(?<table>\w+)(\s+WHERE\s+(?<where>[\w\s><=]+))?(\s+ORDER\s+BY\s+(?<orderBy>\w+)\s+(?<orderDirection>asc|desc))?";
+
+            // Intentar hacer coincidir la sentencia con la expresión regular
+            var match = Regex.Match(sentence, selectPattern, RegexOptions.IgnoreCase);
+
+            if (match.Success)
+            {
+                // Extraer las variables de la sentencia SQL
+                var columns = match.Groups["columns"].Value;
+                var tableName = match.Groups["table"].Value;
+                var whereClause = match.Groups["where"].Value;
+                var orderBy = match.Groups["orderBy"].Value;
+                var orderDirection = match.Groups["orderDirection"].Value;
+
+                // Aquí puedes agregar la lógica para procesar la consulta
+                Console.WriteLine($"Columns: {columns}");
+                Console.WriteLine($"Table: {tableName}");
+                if (!string.IsNullOrEmpty(whereClause))
+                {
+                    Console.WriteLine($"Where clause: {whereClause}");
+                }
+                if (!string.IsNullOrEmpty(orderBy))
+                {
+                    Console.WriteLine($"Order by: {orderBy} {orderDirection}");
+                }
+
+                // Procesar la consulta...
+                // return el resultado deseado.
+                return OperationStatus.Success;
+            }
+            else
+            {
+                consoleHelper.PrintError("Error en la sintaxis de la sentencia SELECT.");
+                return OperationStatus.Error;
+            }
         }
 
         public OperationStatus Insert(string sentence)

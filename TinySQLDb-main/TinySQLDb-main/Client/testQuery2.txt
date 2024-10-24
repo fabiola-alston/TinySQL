@@ -34,4 +34,6 @@ INSERT INTO Tabla2 (2, "Juan", 3.14, "2024-10-18 12:00:00");
 
 INSERT INTO Tabla2 (3, "Pedro", 3.14, "2024-10-18 12:00:00");
 
+SELECT * FROM Tabla2 WHERE ID = 1;
+
 DELETE FROM Tabla2;
