@@ -506,8 +506,6 @@ namespace StoreDataManager
         public OperationStatus Select(string sentence)
         {
             var selectPattern = @"SELECT\s+(?<columns>[\*\w,\s]+)\s+FROM\s+(?<table>\w+)(\s+WHERE\s+(?<where>[\w\s><=]+))?(\s+ORDER\s+BY\s+(?<orderBy>\w+)\s+(?<orderDirection>asc|desc))?";
-
-            // Intentar hacer coincidir la sentencia con la expresión regular
             var match = Regex.Match(sentence, selectPattern, RegexOptions.IgnoreCase);
 
             if (match.Success)
@@ -519,7 +517,6 @@ namespace StoreDataManager
                 var orderBy = match.Groups["orderBy"].Value;
                 var orderDirection = match.Groups["orderDirection"].Value;
 
-                // Aquí puedes agregar la lógica para procesar la consulta
                 Console.WriteLine($"Columns: {columns}");
                 Console.WriteLine($"Table: {tableName}");
                 if (!string.IsNullOrEmpty(whereClause))
@@ -530,9 +527,6 @@ namespace StoreDataManager
                 {
                     Console.WriteLine($"Order by: {orderBy} {orderDirection}");
                 }
-
-                // Procesar la consulta...
-                // return el resultado deseado.
                 return OperationStatus.Success;
             }
             else
